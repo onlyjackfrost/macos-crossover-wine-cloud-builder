@@ -2,26 +2,26 @@ name: Wine-Crossover-MacOS
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 env:
-    # avoid weird linker errors with Xcode 10 and later
-    MACOSX_DEPLOYMENT_TARGET: 10.14
-    # directories / files inside the downloaded tar file directory structure
-    WINE_CONFIGURE: ${{ github.workspace }}/sources/wine/configure
-    # build directories
-    BUILDROOT: ${{ github.workspace }}/build
-    # target directory for installation
-    INSTALLROOT: ${{ github.workspace }}/install
-    TOOLS_INSTALLATION: build-tools-cx
-    MOLTENVK_DXVK_INSTALLATION: moltenvk-dxvk
+  # avoid weird linker errors with Xcode 10 and later
+  MACOSX_DEPLOYMENT_TARGET: 10.14
+  # directories / files inside the downloaded tar file directory structure
+  WINE_CONFIGURE: ${{ github.workspace }}/sources/wine/configure
+  # build directories
+  BUILDROOT: ${{ github.workspace }}/build
+  # target directory for installation
+  INSTALLROOT: ${{ github.workspace }}/install
+  TOOLS_INSTALLATION: build-tools-cx
+  MOLTENVK_DXVK_INSTALLATION: moltenvk-dxvk
 
 jobs:
   moltenVK_DXVK:
-    runs-on:  macos-latest
+    runs-on: macos-latest
     env:
       # crossover source code to be downloaded
       CROSS_OVER_SOURCE_URL: https://media.codeweavers.com/pub/crossover/source/crossover-sources-21.2.0.tar.gz
@@ -42,14 +42,14 @@ jobs:
       ############ Build MoltenVK / DXVK (if restore from cache failed) ##############
 
       - name: Get and Extract Source
-        if:  steps.cache_moltenVK_DXVK.outputs.cache-hit != 'true'
+        if: steps.cache_moltenVK_DXVK.outputs.cache-hit != 'true'
         uses: ./.github/actions/get_source
         with:
           crossover-local-file: "${{ env.CROSS_OVER_LOCAL_FILE }}"
           crossover-source-url: "${{ env.CROSS_OVER_SOURCE_URL }}"
 
       - name: Build / Install MoltenVK and DXVK (if restore from cache failed)
-        if:  steps.cache_moltenVK_DXVK.outputs.cache-hit != 'true'
+        if: steps.cache_moltenVK_DXVK.outputs.cache-hit != 'true'
         uses: ./.github/actions/build_moltenvk_dxvk
         with:
           install-prefix: "${{ env.INSTALLROOT }}/${{ env.MOLTENVK_DXVK_INSTALLATION }}"
@@ -70,7 +70,6 @@ jobs:
           name: ${{ env.MOLTENVK_DXVK_INSTALLATION }}
           path: ${{ env.INSTALLROOT }}/${{ env.MOLTENVK_DXVK_INSTALLATION }}.tar.gz
 
-
   wine-crossover:
     needs: [moltenVK_DXVK]
 
@@ -78,7 +77,7 @@ jobs:
       fail-fast: false
       matrix:
         CROSS_OVER_VERSION: [22.0.1, 21.2.0, 20.0.4, 19.0.2] # 22.0.0, 21.1.0, 21.0.0, 20.0.2, 20.0.1, 20.0.0, 19.0.1, 19.0.0
-    runs-on:  macos-latest
+    runs-on: macos-latest
 
     env:
       # crossover source code to be downloaded
@@ -89,7 +88,6 @@ jobs:
       DXVK_INSTALLATION: dxvk-cx${{ matrix.CROSS_OVER_VERSION }}
 
     steps:
-
       ############ Prepare Workspace / Environment ##############
 
       - name: Checkout
@@ -278,12 +276,11 @@ jobs:
           path: ${{ env.INSTALLROOT }}/${{ env.WINE_INSTALLATION }}.tar.gz
 
   wine-crossover-local:
-
     strategy:
       fail-fast: false
       matrix:
         CROSS_OVER_VERSION: [22.0.1] # 22.0.0, 21.2.0, 20.0.4, 19.0.2, 21.1.0, 21.0.0, 20.0.2, 20.0.1, 20.0.0
-    runs-on:  macos-latest
+    runs-on: macos-latest
     needs: wine-crossover
 
     env:
@@ -292,7 +289,6 @@ jobs:
       PACKAGE_UPLOAD: ${{ github.workspace }}/upload
 
     steps:
-
       - name: Checkout
         uses: actions/checkout@v2
 
@@ -300,7 +296,7 @@ jobs:
         run: ./build_local.sh
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: artifacts-build_local-wine-cx${{ matrix.CROSS_OVER_VERSION }}
           path: ${{ env.PACKAGE_UPLOAD }}
